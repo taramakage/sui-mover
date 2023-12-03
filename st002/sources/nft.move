@@ -7,71 +7,81 @@ module st002::nft {
     use sui::transfer;
     use sui::tx_context::{Self, TxContext};
 
-    struct DevNetNFT has key, store {
+    struct MintCap has key {
+        id: UID
+    }
+
+    struct Token has key, store {
         id: UID,
         name: string::String,
         description: string::String,
         url: Url,
     }
 
-    struct NFTMinted has copy, drop {
+    struct MintEvent has copy, drop {
         object_id: ID,
         creator: address,
         name: string::String,
     }
 
-
-    public fun name(nft: &DevNetNFT): &string::String {
-        &nft.name
+    fun init(ctx: &mut TxContext) {
+        transfer::transfer(MintCap { 
+            id: object::new(ctx) 
+        }, tx_context::sender(ctx))
     }
 
-    public fun description(nft: &DevNetNFT): &string::String {
-        &nft.description
+    public fun name(token: &Token): &string::String {
+        &token.name
     }
 
-    public fun url(nft: &DevNetNFT): &Url {
-        &nft.url
+    public fun description(token: &Token): &string::String {
+        &token.description
+    }
+
+    public fun url(token: &Token): &Url {
+        &token.url
     }
 
     public entry fun mint(
+        _: &MintCap,
+        recipeint: address,
         name: vector<u8>,
         description: vector<u8>,
         url: vector<u8>,
         ctx: &mut TxContext
     ) {
-        let sender = tx_context::sender(ctx);
-        let nft = DevNetNFT {
+        let token = Token {
             id: object::new(ctx),
             name: string::utf8(name),
             description: string::utf8(description),
             url: url::new_unsafe_from_bytes(url)
         };
 
-        event::emit(NFTMinted {
-            object_id: object::id(&nft),
-            creator: sender,
-            name: nft.name,
+        event::emit(MintEvent {
+            object_id: object::id(&token),
+            creator: recipeint,
+            name: token.name,
         });
 
-        transfer::public_transfer(nft, sender);
+        transfer::public_transfer(token, recipeint);
     }
 
     public entry fun transfer(
-        nft: DevNetNFT, recipient: address, _: &mut TxContext
+        token: Token, recipient: address, ctx: &mut TxContext
     ) {
-        transfer::public_transfer(nft, recipient)
+        transfer::public_transfer(token, recipient)
     }
 
    public entry fun edit(
-        nft: &mut DevNetNFT,
+        token: &mut Token,
         new_description: vector<u8>,
         _: &mut TxContext
     ) {
-        nft.description = string::utf8(new_description)
+        token.description = string::utf8(new_description)
     }
 
-    public entry fun burn(nft: DevNetNFT, _: &mut TxContext) {
-        let DevNetNFT { id, name: _, description: _, url: _ } = nft;
+    public entry fun burn(token: Token, _: &mut TxContext) {
+        let Token { id, name: _, description: _, url: _ } = token;
         object::delete(id)
     }
 }
