@@ -7,6 +7,7 @@ module st002::nft {
     use sui::transfer;
     use sui::tx_context::{Self, TxContext};
 
+    // MintCap: capability to mint token.
     struct MintCap has key {
         id: UID
     }
@@ -30,18 +31,7 @@ module st002::nft {
         }, tx_context::sender(ctx))
     }
 
-    public fun name(token: &Token): &string::String {
-        &token.name
-    }
-
-    public fun description(token: &Token): &string::String {
-        &token.description
-    }
-
-    public fun url(token: &Token): &Url {
-        &token.url
-    }
-
+    // Entrypoint
     public entry fun mint(
         _: &MintCap,
         recipeint: address,
@@ -66,8 +56,11 @@ module st002::nft {
         transfer::public_transfer(token, recipeint);
     }
 
+
     public entry fun transfer(
-        token: Token, recipient: address, ctx: &mut TxContext
+        token: Token, 
+        recipient: address, 
+        _: &mut TxContext
     ) {
         transfer::public_transfer(token, recipient)
     }
@@ -83,5 +76,19 @@ module st002::nft {
     public entry fun burn(token: Token, _: &mut TxContext) {
         let Token { id, name: _, description: _, url: _ } = token;
         object::delete(id)
+    }
+
+    // Accessor
+
+    public fun name(token: &Token): &string::String {
+        &token.name
+    }
+
+    public fun description(token: &Token): &string::String {
+        &token.description
+    }
+
+    public fun url(token: &Token): &Url {
+        &token.url
     }
 }
