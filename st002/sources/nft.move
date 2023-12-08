@@ -32,6 +32,7 @@ module st002::nft {
     }
 
     // Entrypoint
+
     public entry fun mint(
         _: &MintCap,
         recipeint: address,
